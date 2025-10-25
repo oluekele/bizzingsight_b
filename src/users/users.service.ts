@@ -2,11 +2,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserRole } from '../entities/user.entity';
 import * as bcrypt from 'bcrypt';
-import { Injectable } from '@nestjs/common/decorators';
 import {
+  Injectable,
   ForbiddenException,
   NotFoundException,
-} from '@nestjs/common/exceptions';
+} from '@nestjs/common';
 
 @Injectable()
 export class UsersService {

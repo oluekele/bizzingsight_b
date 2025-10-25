@@ -13,7 +13,7 @@ import {
   Body,
   UseGuards,
   Request,
-} from '@nestjs/common/decorators';
+} from '@nestjs/common';
 
 @ApiTags('users')
 @Controller('users')

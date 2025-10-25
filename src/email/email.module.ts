@@ -7,7 +7,7 @@ import { Module } from '@nestjs/common/decorators';
   imports: [
     MailerModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         transport: {
           host: configService.get('EMAIL_HOST', 'smtp.ethereal.email'),
           port: configService.get('EMAIL_PORT', 587),

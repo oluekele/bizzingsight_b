@@ -17,7 +17,7 @@ import {
   Delete,
   Body,
   Param,
-} from '@nestjs/common/decorators';
+} from '@nestjs/common';
 
 @ApiTags('products')
 @Controller('products')

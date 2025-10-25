@@ -12,12 +12,12 @@ import { User, UserRole } from '../entities/user.entity';
 import { EmailService } from '../email/email.service';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
-import { Injectable } from '@nestjs/common/decorators';
+import { Injectable } from '@nestjs/common';
 import {
   BadRequestException,
   NotFoundException,
   UnauthorizedException,
-} from '@nestjs/common/exceptions';
+} from '@nestjs/common';
 
 @Injectable()
 export class AuthService {

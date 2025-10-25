@@ -5,7 +5,7 @@ import { KpisService } from './kpis.service';
 import { Kpi } from './kpis.entity';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { UserRole } from 'src/entities/user.entity';
-import { Controller, Get, UseGuards } from '@nestjs/common/decorators';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 
 @ApiTags('kpis')
 @Controller('kpis')

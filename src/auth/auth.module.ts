@@ -8,7 +8,7 @@ import { JwtStrategy } from './jwt.strategy';
 import { LocalStrategy } from './local.strategy';
 import { EmailModule } from '../email/email.module';
 import { UsersModule } from '../users/users.module';
-import { Module } from '@nestjs/common/decorators';
+import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 
 @Module({

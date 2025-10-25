@@ -1,18 +1,14 @@
 import { NestFactory } from '@nestjs/core';
-import { INestApplication } from '@nestjs/common';
-import { AppModule } from './app.module';
+import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
-import { getConnection } from 'typeorm';
+import { AppModule } from './app.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
 import { Reflector } from '@nestjs/core';
 import helmet from 'helmet';
-import { version } from 'os';
-import { Logger } from '@nestjs/common/services';
-import { ValidationPipe } from '@nestjs/common/pipes';
-// import { version } from '*/package.json';
-// import { HttpExceptionFilter } from './filters/http-exception.filter';
+import { DataSource } from 'typeorm';
+import { version } from 'os'; // optional — replace with package.json version if needed
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -20,18 +16,20 @@ async function bootstrap() {
 
   try {
     app = await NestFactory.create(AppModule);
-  } catch (error: unknown) {
+  } catch (error) {
     logger.error(`Failed to create Nest application: ${String(error)}`);
     process.exit(1);
   }
 
-  // Enable CORS with dynamic origins
+  // Config service
   const configService = app.get(ConfigService);
-  const frontendUrl: string = configService.get(
+  const frontendUrl = configService.get(
     'FRONTEND_URL',
     'http://localhost:3000',
   );
-  const nodeEnv: string = configService.get('NODE_ENV', 'development');
+  const nodeEnv = configService.get('NODE_ENV', 'development');
+
+  // Enable CORS
   app.enableCors({
     origin: nodeEnv === 'production' ? frontendUrl : true,
     credentials: true,
@@ -39,7 +37,7 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
-  // Security headers with Helmet
+  // Security headers
   app.use(
     helmet({
       contentSecurityPolicy: {
@@ -54,50 +52,49 @@ async function bootstrap() {
     }),
   );
 
-  // Global pipes, guards, and filters
+  // Global validation, guards
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
-  // app.useGlobalFilters(new HttpExceptionFilter());
   const reflector = app.get(Reflector);
   app.useGlobalGuards(new JwtAuthGuard(reflector), new RolesGuard(reflector));
 
   // Swagger setup
-  const config = new DocumentBuilder()
+  const swaggerConfig = new DocumentBuilder()
     .setTitle('BizInsight360 API')
     .setDescription('API for BizInsight360 admin dashboard')
-    // .setVersion(version || '1.0.0')
     .addBearerAuth()
     .build();
-  const document = SwaggerModule.createDocument(app, config);
+
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api-docs', app, document);
 
-  // Endpoint to export OpenAPI spec for Postman
+  // OpenAPI JSON export
   app.getHttpAdapter().get('/api-spec', (req, res) => {
     res.json(document);
   });
 
-  // Root endpoint for API status
+  // Root route
   app.getHttpAdapter().get('/', (req, res) => {
     res.json({
       message: 'BizInsight360 API is working',
       service: 'BizInsight360 API',
       version: version || '1.0.0',
       docs: '/api-docs',
-      api: '/',
       environment: nodeEnv,
     });
   });
 
-  // Health check endpoint
+  // Health check endpoint using DataSource
   app.getHttpAdapter().get('/health', async (req, res) => {
     let dbStatus = 'disconnected';
     try {
-      const connection = await getConnection();
-      dbStatus = connection.isConnected ? 'connected' : 'disconnected';
-    } catch (error: unknown) {
+      const dataSource = app.get(DataSource);
+      dbStatus = dataSource.isInitialized ? 'connected' : 'disconnected';
+    } catch (error) {
       logger.error(
         `Health check: Database connection failed: ${String(error)}`,
       );
     }
+
     res.json({
       status: 'ok',
       service: 'BizInsight360 API',
@@ -108,33 +105,37 @@ async function bootstrap() {
     });
   });
 
-  // Test database connection
+  // Test database connection (on startup)
   try {
-    const connection = await getConnection();
-    logger.log(
-      `Database connected successfully: ${connection.options.database}`,
-    );
-  } catch (error: unknown) {
+    const dataSource = app.get(DataSource);
+    if (dataSource.isInitialized) {
+      logger.log(
+        `✅ Database connected successfully: ${dataSource.options.database}`,
+      );
+    } else {
+      logger.error('❌ Database connection not initialized.');
+    }
+  } catch (error) {
     logger.error(`Database connection failed: ${String(error)}`);
   }
 
-  // Enable graceful shutdown
+  // Graceful shutdown
   app.enableShutdownHooks();
 
-  // Start server with port conflict handling
-  const port: number = configService.get('PORT', 3006);
+  // Start server
+  const port = configService.get('PORT', 3006);
   try {
     await app.listen(port, '0.0.0.0');
-    logger.log(`🚀 BizInsight360 API is running on http://localhost:${port}`);
-    logger.log(`📚 API Documentation: http://localhost:${port}/api-docs`);
-    logger.log(`📥 API Spec for Postman: http://localhost:${port}/api-spec`);
-    logger.log(`🩺 Health Check: http://localhost:${port}/health`);
+    logger.log(`🚀 BizInsight360 API running on http://localhost:${port}`);
+    logger.log(`📚 API Docs: http://localhost:${port}/api-docs`);
+    logger.log(`📥 OpenAPI Spec: http://localhost:${port}/api-spec`);
+    logger.log(`🩺 Health: http://localhost:${port}/health`);
     logger.log(`🌐 Environment: ${nodeEnv}`);
     logger.log(`⏰ Timezone: Africa/Lagos (WAT)`);
-  } catch (error: unknown) {
+  } catch (error) {
     if (error instanceof Error && (error as any).code === 'EADDRINUSE') {
       logger.error(
-        `Port ${port} is already in use. Please free the port or choose another.`,
+        `Port ${port} is already in use. Please free the port or use another.`,
       );
       process.exit(1);
     }

@@ -1,5 +1,5 @@
 import { ExecutionContext } from '@nestjs/common';
-import { Injectable } from '@nestjs/common/decorators';
+import { Injectable } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
 

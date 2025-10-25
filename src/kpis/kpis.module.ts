@@ -2,7 +2,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { KpisService } from './kpis.service';
 import { KpisController } from './kpis.controller';
 import { Kpi } from './kpis.entity';
-import { Module } from '@nestjs/common/decorators';
+import { Module } from '@nestjs/common';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Kpi])],
