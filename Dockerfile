@@ -1,22 +1,25 @@
-# Use Node.js 20 as the base image
+# Use an official Node.js runtime as a parent image
 FROM node:20-alpine
 
-# Set working directory
-WORKDIR /src
+# Set the working directory
+WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json
+# Install build dependencies (for some npm packages that need compilation)
+RUN apk add --no-cache python3 make g++
+
+# Copy package.json and package-lock.json first (for Docker layer caching)
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm install --legacy-peer-deps
 
-# Copy source code
+# Copy all source files
 COPY . .
 
-# Build the application
+# Build the NestJS app
 RUN npm run build
 
-# Expose port
+# Expose the application port (matches your .env PORT)
 EXPOSE 3006
 
 # Start the application
