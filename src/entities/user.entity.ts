@@ -1,13 +1,22 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  OneToOne,
+  JoinColumn,
+} from 'typeorm';
 import { IsEmail, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Sale } from './sale.entity';
+import { Customer } from './customer.entity';
 
 export enum UserRole {
   ADMIN = 'ADMIN',
   USER = 'USER',
 }
 
-@Entity()
+@Entity('user')
 export class User {
   @PrimaryGeneratedColumn()
   @ApiProperty({ example: 1 })
@@ -42,4 +51,13 @@ export class User {
   @Column({ nullable: true, type: 'timestamp', default: null })
   @ApiProperty({ example: '2025-10-21T22:39:00.000Z' })
   resetTokenExpires: Date | null;
+
+  @OneToMany(() => Sale, (sale) => sale.user)
+  @ApiProperty({ type: () => Sale, isArray: true })
+  sales: Sale[];
+
+  @OneToOne(() => Customer, (customer) => customer.user, { cascade: true })
+  @JoinColumn()
+  @ApiProperty({ type: () => Customer })
+  customer: Customer;
 }

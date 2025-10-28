@@ -1,24 +1,21 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { IsString, IsInt, IsNumber, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-@Entity()
-export class Product {
-  @PrimaryGeneratedColumn()
-  @ApiProperty({ example: 1, description: 'Unique identifier of the product' })
-  id: number;
-
-  @Column()
+export class CreateProductDto {
   @ApiProperty({
     example: 'Wireless Headphones',
     description: 'Name of the product',
   })
+  @IsString()
   name: string;
 
-  @Column()
   @ApiProperty({ example: 50, description: 'Available stock quantity' })
+  @IsInt()
+  @Min(0)
   stock: number;
 
-  @Column('decimal')
   @ApiProperty({ example: 129.99, description: 'Price of the product' })
+  @IsNumber()
+  @Min(0)
   price: number;
 }

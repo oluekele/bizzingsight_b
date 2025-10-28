@@ -14,6 +14,9 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { KpisModule } from './kpis/kpis.module';
 import { UsersModule } from './users/users.module';
 import { CustomerModule } from './customer/customer.module';
+import { SalesModule } from './sales/sales.module';
+import { Sale } from './entities/sale.entity';
+import { Customer } from './entities/customer.entity';
 
 @Module({
   imports: [
@@ -31,63 +34,43 @@ import { CustomerModule } from './customer/customer.module';
         store: await redisStore({
           url: configService.get('REDIS_URL', 'redis://localhost:6379'),
         }),
-        ttl: 60000, // Cache time-to-live in ms
+        ttl: 60000,
       }),
     }),
-    // TypeOrmModule.forRootAsync({
-    //   imports: [ConfigModule],
-    //   useFactory: (configService: ConfigService) => {
-    //     const dbConfig = {
-    //       type: 'postgres' as const,
-    //       host: configService.get('DB_HOST', 'localhost'),
-    //       port: +configService.get('DB_PORT', 5432),
-    //       username: configService.get('DB_USERNAME', 'postgres'),
-    //       password: configService.get('DB_PASSWORD', 'Applying'),
-    //       database: configService.get('DB_DATABASE', 'bizinsight360'),
-    //       entities: [User, Product, Kpi],
-    //       synchronize: true,
-    //       logging: true,
-    //     };
-
-    //     return dbConfig;
-    //   },
-    //   inject: [ConfigService],
-    // }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
         const databaseUrl = configService.get<string>('DATABASE_URL');
-
         if (databaseUrl) {
           console.log('✅ Using DATABASE_URL for connection');
           return {
             type: 'postgres',
             url: databaseUrl,
             autoLoadEntities: true,
-            synchronize: true,
+            synchronize: false,
             logging: true,
           };
         }
-
         console.log('⚙️ Using local DB connection');
         return {
           type: 'postgres',
           host: configService.get('DB_HOST', 'localhost'),
-          port: +configService.get('DB_PORT', 5432),
+          port: +configService.get('DB_PORT', 5433),
           username: configService.get('DB_USERNAME', 'postgres'),
           password: configService.get('DB_PASSWORD', 'Applying'),
           database: configService.get('DB_DATABASE', 'bizinsight360'),
           autoLoadEntities: true,
-          synchronize: true,
+          synchronize: false,
           logging: true,
           ssl: {
-            rejectUnauthorized: false, // ✅ Required for Render external DBs
+            rejectUnauthorized: false,
           },
         };
       },
       inject: [ConfigService],
     }),
-    TypeOrmModule.forFeature([User, Product, Kpi]),
+    SalesModule, // Before forFeature
+    TypeOrmModule.forFeature([User, Product, Kpi, Sale, Customer]),
     AuthModule,
     ProductsModule,
     EmailModule,

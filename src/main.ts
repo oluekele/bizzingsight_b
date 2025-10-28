@@ -8,7 +8,6 @@ import { RolesGuard } from './auth/roles.guard';
 import { Reflector } from '@nestjs/core';
 import helmet from 'helmet';
 import { DataSource } from 'typeorm';
-import { version } from 'os'; // optional — replace with package.json version if needed
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -25,18 +24,14 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const frontendUrl = configService.get(
     'FRONTEND_URL',
-    'http://localhost:3000',
+    // 'http://localhost:3000',
   );
   const nodeEnv = configService.get('NODE_ENV', 'development');
 
   // Enable CORS
   app.enableCors({
-    origin:
-      nodeEnv === 'production'
-        ? frontendUrl
-        : nodeEnv === 'development'
-          ? 'http://localhost:3000'
-          : true,
+    origin: 'https://bizzingsight-f.vercel.app',
+    // origin: 'http://localhost:3000',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -82,13 +77,13 @@ async function bootstrap() {
     res.json({
       message: 'BizInsight360 API is working',
       service: 'BizInsight360 API',
-      version: version || '1.0.0',
+      version: '1.0.0', // Replace os.version with package.json version
       docs: '/api-docs',
       environment: nodeEnv,
     });
   });
 
-  // Health check endpoint using DataSource
+  // Health check endpoint
   app.getHttpAdapter().get('/health', async (req, res) => {
     let dbStatus = 'disconnected';
     try {
@@ -110,13 +105,11 @@ async function bootstrap() {
     });
   });
 
-  // Test database connection (on startup)
+  // Test database connection
   try {
     const dataSource = app.get(DataSource);
     if (dataSource.isInitialized) {
-      logger.log(
-        `✅ Database connected successfully: ${dataSource.options.database}`,
-      );
+      logger.log(`✅ Database connected: ${dataSource.options.database}`);
     } else {
       logger.error('❌ Database connection not initialized.');
     }
@@ -140,7 +133,7 @@ async function bootstrap() {
   } catch (error) {
     if (error instanceof Error && (error as any).code === 'EADDRINUSE') {
       logger.error(
-        `Port ${port} is already in use. Please free the port or use another.`,
+        `Port ${port} is in use. Please free the port or use another.`,
       );
       process.exit(1);
     }
